@@ -20,7 +20,7 @@ const Home = () => {
         name: projectName
       })
       console.log(response.data)
-      setProject(response.data.projects)
+     setProject([...project, response.data]) 
       setProjectName("") // Clear the input after creation
     } catch (error) {
       console.log(error)
