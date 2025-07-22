@@ -92,7 +92,9 @@ const Project = () => {
 
                 console.log(message)
 
-                webContainer?.mount(message.fileTree)
+                if (webContainer && message.fileTree) {
+  webContainer.mount(message.fileTree)
+}
 
                 if (message.fileTree) {
                     setFileTree(message.fileTree || {})
