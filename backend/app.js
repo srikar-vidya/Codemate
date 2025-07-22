@@ -9,7 +9,11 @@ const app=express();
 app.use(express.json());
 app.use(express.urlencoded({extended:true}))
 app.use(cookieParser())
-app.use(cors());
+const allowedOrigins = ['https://codemate-frontend-eakf.onrender.com'];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 connect();
 app.get("/",(req,res)=>{
     res.send("hii")
