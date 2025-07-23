@@ -37,11 +37,12 @@ const Project = () => {
   const [webContainer,setWebContainer]=useState(null)
   const [iframeUrl,setIframeUrl]=useState(null)
   const [runProcess,setRunProcess]=useState(null)
-  const [pendingFileTree, setPendingFileTree] = useState(null)
+  // const [pendingFileTree, setPendingFileTree] = useState(null)
   const [fileTree,setFileTree]=useState({
     
   })
   const messageBox=React.createRef()
+
   const handleUserClick = (id) => {
     setSelectedUserId(prev => {
       const newSet = new Set(prev);
@@ -82,7 +83,7 @@ const Project = () => {
         }
 
 
-        receiveMessage('project-message', data => {
+        receiveMessage('project-message',async data => {
 
             console.log(data)
             
@@ -93,13 +94,13 @@ const Project = () => {
 
                 console.log(message)
 
-//                 if (webContainer && message.fileTree) {
-//   webContainer.mount(message.fileTree)
-// }
+                if (webContainer && message.fileTree) {
+                await  webContainer.mount(message.fileTree)
+}
 
                 if (message.fileTree) {
                     setFileTree(message.fileTree || {})
-                    setPendingFileTree(message.fileTree) 
+                    // setPendingFileTree(message.fileTree) 
                 }
                 setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
             } else {
@@ -165,12 +166,12 @@ const Project = () => {
                 />
             </div>)
     }
-    useEffect(() => {
-  if (webContainer && pendingFileTree) {
-    webContainer.mount(pendingFileTree)
-    setPendingFileTree(null)
-  }
-}, [webContainer, pendingFileTree])
+  //   useEffect(() => {
+  // if (webContainer && pendingFileTree) {
+  //   webContainer.mount(pendingFileTree)
+  //   setPendingFileTree(null)
+  // }
+// }, [webContainer, pendingFileTree])
   if (!project) return <div className="text-center p-8">Loading project...</div>;
 
   return (
