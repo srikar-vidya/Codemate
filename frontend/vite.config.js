@@ -8,11 +8,15 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    headers: {
-      "Cross-Origin-Embedder-Policy": "require-corp",
-      "Cross-Origin-Opener-Policy": "same-origin"
+    // Use middleware instead of headers
+    middlewareMode: false,
+    configureServer(server) {
+      server.middlewares.use((_req, res, next) => {
+        res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+        next();
+      });
     },
-    // Proxy should be inside server config
     proxy: {
       "/cdn": {
         target: "https://cdn.jsdelivr.net",
@@ -21,11 +25,14 @@ export default defineConfig({
       }
     }
   },
-  // Also add headers for production builds
   preview: {
     headers: {
       "Cross-Origin-Embedder-Policy": "require-corp",
       "Cross-Origin-Opener-Policy": "same-origin"
     }
+  },
+  // Add optimizeDeps to handle WebContainer properly
+  optimizeDeps: {
+    exclude: ['@webcontainer/api']
   }
 })
