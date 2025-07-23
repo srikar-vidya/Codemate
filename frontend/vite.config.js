@@ -8,14 +8,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    // Use middleware instead of headers
-    middlewareMode: false,
-    configureServer(server) {
-      server.middlewares.use((_req, res, next) => {
-        res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-        next();
-      });
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
     },
     proxy: {
       "/cdn": {
