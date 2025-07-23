@@ -14,7 +14,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
-app.use(cors());
+// app.use(cors());
 connect();
 app.get("/",(req,res)=>{
     res.send("hii")

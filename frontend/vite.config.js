@@ -3,22 +3,29 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),
+  plugins: [
+    react(),
     tailwindcss(),
   ],
-  server:{
-    headers:{
-      "Cross-Origin-Embedder-Policy":"require-corp",
-      "Cross-Origin-Opener-Policy":"same-origin"
-    }
-  },
-  proxy: {
+  server: {
+    headers: {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin"
+    },
+    // Proxy should be inside server config
+    proxy: {
       "/cdn": {
         target: "https://cdn.jsdelivr.net",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cdn/, "")
       }
     }
-
+  },
+  // Also add headers for production builds
+  preview: {
+    headers: {
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin"
+    }
+  }
 })
-
