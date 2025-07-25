@@ -35,6 +35,8 @@ const Project = () => {
   const [currentFile,setCurrentFile]=useState(null)
   const [openFiles, setOpenFiles] = useState([]);
   const [webContainer,setWebContainer]=useState(null)
+  const [webContainerLoading, setWebContainerLoading] = useState(false)
+  const [isRunning, setIsRunning] = useState(false)
   const [iframeUrl,setIframeUrl]=useState(null)
   const [runProcess,setRunProcess]=useState(null)
   // const [pendingFileTree, setPendingFileTree] = useState(null)
@@ -61,6 +63,7 @@ const Project = () => {
       setProject(res.data.project);
     }).catch(console.error);
   };
+  
   const send=()=>{
     console.log(user)
     sendMessage("project-message",{
@@ -71,17 +74,85 @@ const Project = () => {
     setMessages(prevMessages => [ ...prevMessages, { sender: user, message } ])
     setMessage("")
   }
+
+  const initializeWebContainer = async () => {
+    if (webContainer) return webContainer;
+    
+    try {
+      setWebContainerLoading(true);
+      const container = await getWebContainer();
+      setWebContainer(container);
+      console.log("container started");
+      return container;
+    } catch (error) {
+      console.error("Failed to initialize WebContainer:", error);
+      throw error;
+    } finally {
+      setWebContainerLoading(false);
+    }
+  };
+
+  const runProject = async () => {
+    try {
+      setIsRunning(true);
+      
+      // Ensure WebContainer is ready
+      let container = webContainer;
+      if (!container) {
+        console.log("Initializing WebContainer...");
+        container = await initializeWebContainer();
+      }
+
+      console.log("Mounting file tree...");
+      await container.mount(fileTree);
+
+      console.log("Installing dependencies...");
+      const installProcess = await container.spawn("npm", ["install"]);
+
+      installProcess.output.pipeTo(new WritableStream({
+        write(chunk) {
+          console.log("Install:", chunk);
+        }
+      }));
+
+      // Wait for install to complete
+      await installProcess.exit;
+
+      // Kill existing run process if any
+      if (runProcess) {
+        runProcess.kill();
+      }
+
+      console.log("Starting application...");
+      let tempRunProcess = await container.spawn("npm", ["start"]);
+
+      tempRunProcess.output.pipeTo(new WritableStream({
+        write(chunk) {
+          console.log("Run:", chunk);
+        }
+      }));
+
+      setRunProcess(tempRunProcess);
+
+      container.on('server-ready', (port, url) => {
+        console.log("Server ready on port", port, "URL:", url);
+        setIframeUrl(url);
+      });
+
+    } catch (error) {
+      console.error("Failed to run project:", error);
+      // You might want to show a user-friendly error message here
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
    useEffect(() => {
 
         initialzeSocket(project._id)
 
-        if (!webContainer) {
-            getWebContainer().then(container => {
-                setWebContainer(container)
-                console.log("container started")
-            })
-        }
-
+        // Initialize WebContainer in the background
+        initializeWebContainer().catch(console.error);
 
         receiveMessage('project-message',async data => {
 
@@ -282,47 +353,27 @@ const Project = () => {
 
                         <div className="actions flex gap-2">
                             <button
-                                onClick={async () => {
-                                  if (!webContainer) {
-                                        console.error("WebContainer is not ready yet");
-                                        return;
-                                    }
-                                    await webContainer.mount(fileTree)
-
-
-                                    const installProcess = await webContainer.spawn("npm", [ "install" ])
-
-
-
-                                    installProcess.output.pipeTo(new WritableStream({
-                                        write(chunk) {
-                                            console.log(chunk)
-                                        }
-                                    }))
-
-                                    if (runProcess) {
-                                        runProcess.kill()
-                                    }
-
-                                    let tempRunProcess = await webContainer.spawn("npm", [ "start" ]);
-
-                                    tempRunProcess.output.pipeTo(new WritableStream({
-                                        write(chunk) {
-                                            console.log(chunk)
-                                        }
-                                    }))
-
-                                    setRunProcess(tempRunProcess)
-
-                                    webContainer.on('server-ready', (port, url) => {
-                                        console.log(port, url)
-                                        setIframeUrl(url)
-                                    })
-
-                                }}
-                                className='p-2 px-4 bg-slate-300 text-white'
+                                onClick={runProject}
+                                disabled={isRunning || webContainerLoading}
+                                className={`p-2 px-4 text-white rounded transition-colors ${
+                                  isRunning || webContainerLoading 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-slate-700 hover:bg-slate-800'
+                                }`}
                             >
-                                run
+                                {isRunning ? (
+                                  <span className="flex items-center gap-2">
+                                    <i className="ri-loader-4-line animate-spin"></i>
+                                    Running...
+                                  </span>
+                                ) : webContainerLoading ? (
+                                  <span className="flex items-center gap-2">
+                                    <i className="ri-loader-4-line animate-spin"></i>
+                                    Initializing...
+                                  </span>
+                                ) : (
+                                  'Run'
+                                )}
                             </button>
 
 
