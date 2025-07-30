@@ -6,6 +6,8 @@ import { useUser } from '../context/userContext'
 import Markdown from 'markdown-to-jsx'
 import hljs from 'highlight.js';
 import { getWebContainer } from '../config/webContainer';
+
+
 function SyntaxHighlightedCode(props) {
     const ref = useRef(null)
 
@@ -37,12 +39,13 @@ const Project = () => {
   const [webContainer,setWebContainer]=useState(null)
   const [iframeUrl,setIframeUrl]=useState(null)
   const [runProcess,setRunProcess]=useState(null)
+  const [webContainerReady, setWebContainerReady] = useState(false)
   // const [pendingFileTree, setPendingFileTree] = useState(null)
   const [fileTree,setFileTree]=useState({
     
   })
   const messageBox=React.createRef()
-
+// adding collobarators while clicking 
   const handleUserClick = (id) => {
     setSelectedUserId(prev => {
       const newSet = new Set(prev);
@@ -71,65 +74,73 @@ const Project = () => {
     setMessages(prevMessages => [ ...prevMessages, { sender: user, message } ])
     setMessage("")
   }
-   useEffect(() => {
-
-        initialzeSocket(project._id)
+  //  initialitization of web container
+  useEffect(() => {
+        const initWebContainer = async () => {
+            try {
+                console.log("Initializing WebContainer...");
+                const container = await getWebContainer();
+                setWebContainer(container);
+                setWebContainerReady(true);
+                console.log("WebContainer initialized successfully");
+            } catch (error) {
+                console.error("Failed to initialize WebContainer:", error);
+                setWebContainerReady(false);
+            }
+        };
 
         if (!webContainer) {
-            getWebContainer().then(container => {
-                setWebContainer(container)
-                console.log("container started")
-            })
+            initWebContainer();
         }
+    }, []);
 
+    useEffect(() => {
+        initialzeSocket(project._id)
 
-        receiveMessage('project-message',async data => {
-
+        receiveMessage('project-message', async data => {
             console.log(data)
-            
+
             if (data.sender._id == 'ai') {
+                try {
+                    const message = JSON.parse(data.message)
+                    console.log(message)
 
+                    // Only mount if webContainer is ready and we have fileTree
+                    if (webContainer && webContainerReady && message.fileTree) {
+                        try {
+                            await webContainer.mount(message.fileTree);
+                            console.log("FileTree mounted successfully from AI message");
+                        } catch (mountError) {
+                            console.error("Error mounting fileTree from AI:", mountError);
+                        }
+                    }
 
-                const message = JSON.parse(data.message)
-
-                console.log(message)
-
-                if (webContainer && message.fileTree) {
-                await  webContainer.mount(message.fileTree)
-}
-
-                if (message.fileTree) {
-                    setFileTree(message.fileTree || {})
-                    // setPendingFileTree(message.fileTree) 
+                    if (message.fileTree) {
+                        setFileTree(message.fileTree || {})
+                    }
+                    setMessages(prevMessages => [...prevMessages, data])
+                } catch (parseError) {
+                    console.error("Error parsing AI message:", parseError);
+                    setMessages(prevMessages => [...prevMessages, data])
                 }
-                setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
             } else {
-
-
-                setMessages(prevMessages => [ ...prevMessages, data ]) // Update messages state
+                setMessages(prevMessages => [...prevMessages, data])
             }
         })
 
-
         axios.get(`/projects/get-projects/${location.state.project._id}`).then(res => {
-
             console.log(res.data.project)
-
             setProject(res.data.project)
             setFileTree(res.data.project.fileTree || {})
         })
 
         axios.get('/users/all').then(res => {
-
             setUsers(res.data.users)
-
         }).catch(err => {
-
             console.log(err)
-
         })
 
-    }, [])
+    }, [webContainer, webContainerReady])
 
   const saveFileTree=async(ft)=>{
     console.log("hi i am in save")
@@ -242,6 +253,7 @@ const Project = () => {
       </section>
         <section className="right  bg-red-50 flex-grow h-full flex">
             <div className="explorer h-full max-w-64 min-w-52 bg-slate-200">
+              {/* mapping the fils which are comming from the ai */}
                     <div className="file-tree w-full">
                         {
                             Object.keys(fileTree).map((file, index) => (
@@ -262,7 +274,7 @@ const Project = () => {
 
                 </div>
          <div className="code-editor flex flex-col flex-grow h-full shrink">
-
+                        {/* the editor is divied into two parts bottom and top,, bottom is for showing the code and top is showing in which file are we there.. */}
                     <div className="top flex justify-between w-full">
 
                         <div className="files flex">
@@ -287,6 +299,7 @@ const Project = () => {
                                         console.error("WebContainer is not ready yet");
                                         return;
                                     }
+                                    // pushing the file structure in the web container.
                                     await webContainer.mount(fileTree)
 
 
@@ -368,6 +381,7 @@ const Project = () => {
                {iframeUrl && webContainer &&
                     (<div className="flex min-w-96 flex-col h-full">
                         <div className="address-bar">
+                          {/* in which we can go to the another page by making the chnages */}
                             <input type="text"
                                 onChange={(e) => setIframeUrl(e.target.value)}
                                 value={iframeUrl} className="w-full p-2 px-4 bg-slate-200" />

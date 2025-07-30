@@ -12,7 +12,9 @@ router.post("/login",
 body("password").isLength({min:3}).withMessage("password must be atleast 3 characters")
 ,userController.loginUser
 )
+//when we created the logon or register, it will generate us a token, by those token it will send the user infrmation..
 router.get("/profile",authMiddleware.authUser,userController.profileController)
 router.get("/logout",authMiddleware.authUser,userController.logoutController)
+// used to add the colobarators
 router.get("/all",authMiddleware.authUser,userController.getAllUserController)
 export default router

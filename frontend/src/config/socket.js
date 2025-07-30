@@ -1,3 +1,4 @@
+//connecting socket io in the frontend with the backend url
 import socket from "socket.io-client"
 let socketInstance=null;
 export const initialzeSocket=(projectId)=>{
@@ -11,9 +12,11 @@ export const initialzeSocket=(projectId)=>{
     })
     return socketInstance;
 }
+//receive message
 export const receiveMessage=(eventName,cb)=>{
     socketInstance.on(eventName,cb)
 }
+//send messsage
 export const sendMessage=(eventName,data)=>{
     socketInstance.emit(eventName,data)
 }

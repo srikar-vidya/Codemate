@@ -8,29 +8,16 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp')
-        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin')
-        next()
-      })
-    },
-    proxy: {
-      "/cdn": {
-        target: "https://cdn.jsdelivr.net",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/cdn/, "")
-      }
-    }
-  },
-  preview: {
     headers: {
       "Cross-Origin-Embedder-Policy": "require-corp",
       "Cross-Origin-Opener-Policy": "same-origin"
+    },
+    proxy: {
+      '/cdn': {
+        target: 'https://unpkg.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cdn/, '')
+      }
     }
-  },
-  // Add optimizeDeps to handle WebContainer properly
-  optimizeDeps: {
-    exclude: ['@webcontainer/api']
   }
 })

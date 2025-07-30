@@ -4,13 +4,15 @@ import 'remixicon/fonts/remixicon.css';
 import axios from "../config/axios"
 import axiosInstance from "../config/axios";
 import { useNavigate } from 'react-router-dom';
-
+// we are using 1. create project router, 2. to show the members of the project router
 const Home = () => {
   const { user } = useUser()
   const navigate = useNavigate()
+  //isModalOpen is the ui to create the project name.
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [projectName, setProjectName] = useState("")
   const [project, setProject] = useState([])
+  // array of projects showing on the screen, by clicking on those project user will navigate to the project page..
 
   const createProject = async (e) => {
     e.preventDefault()
@@ -76,7 +78,7 @@ const Home = () => {
           </div>
         ))}
       </div>
-
+        
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-md shadow-md w-1/3">

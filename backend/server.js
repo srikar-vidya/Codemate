@@ -15,6 +15,7 @@ const io = new Server(server,{
         origin:"*"
     }
 });
+//verifying the user is vaild or not // we are passing these information during the socket intilization..
 io.use(async(socket,next)=>{
     try {
         const token=socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(" ")[1]
@@ -39,15 +40,20 @@ io.use(async(socket,next)=>{
 io.on('connection', socket => {
     console.log("connected to socket.io")
     socket.roomId=socket.project._id.toString()
+    //keeping all in users in the one room
     socket.join(socket.roomId);
+    //receiving the message
     socket.on("project-message",async (data)=>{
         const message=data.message;
         const aiIsPresentInMessage=message.includes("@ai");
+        //sending the message to all except the owner
         socket.broadcast.to(socket.roomId).emit("project-message",data)
+        //if the request is for the ai....
         if(aiIsPresentInMessage){
             console.log("i am in ai")
             const prompt=message.replace("@ai","");
             const result=await generateResult(prompt)
+            //sending the message to the frontnd
             io.to(socket.roomId).emit("project-message",{
                 message:result,
                 sender:{

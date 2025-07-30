@@ -9,6 +9,8 @@ export const createProjectController=async(req,res)=>{
     }
     try {
         const {name}=req.body;
+        //autheticated user can create the project
+        //req.user.email this information is stored in the jwt token
     const loggedInUser=await User.findOne({email:req.user.email})
     const userId=loggedInUser._id;
     const newProject=await projectService.createProject({name,userId})
@@ -20,6 +22,8 @@ export const createProjectController=async(req,res)=>{
     
 
 }
+//for dispalying the members of users in the project and also getiing the project information
+//for shoe=wing how maany users are present in the project
 export const getAllProjects=async(req,res)=>{
     try {
         const loggedInUser=await User.findOne({email:req.user.email})
@@ -30,6 +34,7 @@ export const getAllProjects=async(req,res)=>{
         res.status(404).json({error:error.message})
     }
 }
+// adding user to the project
 export const addUserToProject=async(req,res)=>{
     const error=validationResult(req);
     if(!error.isEmpty()){
@@ -51,6 +56,7 @@ export const addUserToProject=async(req,res)=>{
         })
     }
 }
+// displaying the all projects on the ui
 export const allProjects=async(req,res)=>{
     try {
         const {projectId}=req.params;
@@ -64,6 +70,7 @@ export const allProjects=async(req,res)=>{
       res.status(400).json({error:error.message})
     }
 }
+// changes that are made in the editor that should reflect on the database
 export const updateFileTree=async(req,res)=>{
     const errors=validationResult(req);
     if (!errors.isEmpty()) {

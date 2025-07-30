@@ -13,6 +13,7 @@ export default async function createUser({
   
    return user;
 }
+// adding at the time of collabarator, adimin should be displayed in the add colobarator
 export const getAllUsers=async({userId})=>{
 
     const users=await User.find({
